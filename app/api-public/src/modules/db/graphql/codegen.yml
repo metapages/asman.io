@@ -1,0 +1,12 @@
+overwrite: true
+schema:
+  "${APP_ORIGIN}/v1/graphql":
+    headers:
+      - X-Hasura-Admin-Secret: ${HASURA_GRAPHQL_ADMIN_SECRET}
+generates:
+  ./src/modules/db/graphql/generated/sdk.ts:
+    documents: "./src/modules/db/graphql/*.graphql"
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-graphql-request

@@ -1,0 +1,15 @@
+overwrite: true
+schema:
+  "${APP_ORIGIN}/v1/graphql":
+    headers:
+      - X-Hasura-Admin-Secret: ${HASURA_GRAPHQL_ADMIN_SECRET}
+generates:
+  ./src/graphql/generated/types.tsx:
+    documents: "src/graphql/*.graphql"
+    plugins:
+      - add: /* eslint-disable */
+      - typescript
+      - typescript-operations
+      - typescript-react-apollo
+    config:
+      withHooks: true

@@ -1,0 +1,59 @@
+# Template docker-compose application
+version: "2.4"
+services:
+
+  # Dockerfile build stage, not automatically pulled/pushed thus specified manually: https://github.com/moby/moby/issues/32612
+  api-private-builder:
+    x-publish: true
+    image: "${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-private-builder:${DOCKER_TAG:-cache}"
+    build:
+      context: .
+      dockerfile: "api-private/Dockerfile"
+      target: api-private-builder
+      cache_from:
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-private-builder:cache
+        # Below based off same image
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-public-builder:cache
+
+  # Contains browser files, can be published many different ways
+  # Currently served via the service: api-public
+  browser-builder:
+    image: ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser-builder:${DOCKER_TAG:-cache}
+    build:
+      context: browser
+      target: browser-builder
+      cache_from:
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser-builder:cache
+
+  # Contains browser files, can be published many different ways
+  # Currently served via the service: api-public
+  browser:
+    x-publish: true
+    image: ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser:${DOCKER_TAG:-cache}
+    build:
+      context: browser
+      target: browser
+      cache_from:
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser-builder:cache
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser:cache
+
+  api-private:
+    build:
+      cache_from:
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-private:cache
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-private-builder:cache
+
+  api-public-builder:
+    x-publish: true
+    image: "${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-public-builder:${DOCKER_TAG:-cache}"
+    build:
+      context: .
+      dockerfile: "api-public/Dockerfile"
+      target: api-public-builder
+      cache_from:
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-public-builder:cache
+        # Not strictly sure if *both* are needed for caching
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser-builder:cache
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}browser:cache
+        # Below based off same image, may not make sense
+        - ${DOCKER_REGISTRY:-}${DOCKER_IMAGE_PREFIX:-}api-private-builder:cache

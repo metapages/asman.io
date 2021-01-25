@@ -1,0 +1,60 @@
+# vouch config
+# bare minimum to get vouch running with google
+
+vouch:
+  port: 9090
+  # logLevel: debug
+  # testing: true
+
+  # set allowAllUsers: true to use Vouch Proxy to just accept anyone who can authenticate at Gitea
+  allowAllUsers: true
+
+  jwt:
+    # in order to run multiple instances of vouch on multiple servers (perhaps purely for validating the jwt),
+    # you'll want them all to have the same secret
+    # secret: your_random_string
+    # number of minutes until jwt expires - VOUCH_JWT_MAXAGE
+    maxAge: 2
+
+  cookie:
+    # name of cookie to store the jwt - VOUCH_COOKIE_NAME
+    # This expires very quickly, as the app controls it's own cookie once authenticated via vouch
+    # This name (more accurately the _OAuthCookie suffix) is referenced in app/api-public/src/modules/routes/logout/index.ts
+    # so changes here need to be reflected in that file
+    name: app1.dev_OAuthCookie
+    # allow the jwt/cookie to be set into http://yourdomain.com (defaults to true, requiring https://yourdomain.com)
+    secure: true
+    # vouch.cookie.domain must be set when enabling allowAllUsers
+    domain: app1.dev
+    # Set cookie maxAge to 0 to delete the cookie every time the browser is closed. - VOUCH_COOKIE_MAXAGE
+    maxAge: 0
+
+  headers:
+    claims:
+      - email
+      - picture
+
+
+  # post_logout_redirect_uris - VOUCH_POST_LOGOUT_REDIRECT_URIS
+  # in order to prevent redirection attacks all redirected URLs to /logout must be specified
+  # the URL must still be passed to Vouch Proxy as https://vouch.yourdomain.com/logout?url=${ONE OF THE URLS BELOW}
+  # in line with the OIDC spec https://openid.net/specs/openid-connect-session-1_0.html#RedirectionAfterLogout
+  post_logout_redirect_uris:
+    # your apps login page
+    - https://app1.dev/
+    - https://app1.dev:443/
+
+oauth:
+  # get credentials from...
+  # https://console.developers.google.com/apis/credentials/oauthclient/1079126760497-tb8d4rl3c4v8uivt6td6p7lvcjejc68m.apps.googleusercontent.com
+  # Setup in the above site:
+  #  - "APIs & Services -> Client ID for Web Application"
+  #    - Authorized JavaScript origins:
+  #      - empty
+  #    - Authorized redirect URIs:
+  #      - https://app1.dev:443/login
+  provider: google
+  client_id: 531794682799-6p90dm03ov847opilv29ikdgobip89bm.apps.googleusercontent.com
+  client_secret: av4bnSeitYXYyO8qcoO_Ka8d
+  callback_urls:
+    - https://oauth.app1.dev:443/auth

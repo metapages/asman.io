@@ -1,0 +1,34 @@
+actions:
+- name: isUsername
+  definition:
+    kind: ""
+    handler: '{{HASURA_GRAPHQL_HOOKS}}/action'
+    headers:
+    - name: authorization
+      value_from_env: HOOKS_API_KEY
+  permissions:
+  - role: user
+- name: setUsername
+  definition:
+    kind: synchronous
+    handler: '{{HASURA_GRAPHQL_HOOKS}}/action'
+    headers:
+    - name: authorization
+      value_from_env: HOOKS_API_KEY
+  permissions:
+  - role: user
+custom_types:
+  enums: []
+  input_objects: []
+  objects:
+  - name: SetUsernameOutput
+    relationships:
+    - remote_table:
+        schema: public
+        name: users
+      name: setUsername_username
+      type: object
+      field_mapping:
+        username: username
+  - name: IsUsernameOutput
+  scalars: []

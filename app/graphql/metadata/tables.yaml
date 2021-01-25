@@ -1,0 +1,89 @@
+- table:
+    schema: public
+    name: tokens
+  object_relationships:
+  - name: userByUser
+    using:
+      foreign_key_constraint_on: user
+- table:
+    schema: public
+    name: users
+  array_relationships:
+  - name: tokens
+    using:
+      foreign_key_constraint_on:
+        column: user
+        table:
+          schema: public
+          name: tokens
+  - name: users_preferences
+    using:
+      foreign_key_constraint_on:
+        column: user
+        table:
+          schema: public
+          name: users_preferences
+  select_permissions:
+  - role: user
+    permission:
+      columns:
+      - email
+      - picture
+      - username
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+      limit: 1
+  update_permissions:
+  - role: user
+    permission:
+      columns:
+      - username
+      filter:
+        id:
+          _eq: X-Hasura-User-Id
+      check: null
+- table:
+    schema: public
+    name: users_preferences
+  object_relationships:
+  - name: userByUser
+    using:
+      foreign_key_constraint_on: user
+  insert_permissions:
+  - role: user
+    permission:
+      check:
+        user:
+          _eq: X-Hasura-User-Id
+      set:
+        user: x-hasura-X-Hasura-User-Id
+      columns:
+      - key
+      - value
+      backend_only: false
+  select_permissions:
+  - role: user
+    permission:
+      columns:
+      - key
+      - value
+      filter:
+        user:
+          _eq: X-Hasura-User-Id
+  update_permissions:
+  - role: user
+    permission:
+      columns:
+      - key
+      - value
+      filter:
+        user:
+          _eq: X-Hasura-User-Id
+      check: null
+  delete_permissions:
+  - role: user
+    permission:
+      filter:
+        user:
+          _eq: X-Hasura-User-Id

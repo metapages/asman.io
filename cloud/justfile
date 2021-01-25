@@ -1,0 +1,97 @@
+# just docs: https://github.com/casey/just
+
+set shell := ["bash", "-c"]
+export ROOT                        := `dirname $PWD`
+# You shouldn't need to set this yourself
+# Eg "yourname/yourrepo". By default, we'll try to get it whereever it might be available (env vars, git)
+# This line is duplicated in app/justfile
+export DOCKER_IMAGE_PREFIX         := env_var_or_default("DOCKER_IMAGE_PREFIX", `(which deno >/dev/null && which git >/dev/null && deno run --unstable --allow-all ../.cloudseed/deno/cloudseed/docker_image_prefix.ts) || echo ''`)
+# Always assume our current cloud ops image is versioned to the exact same app images we deploy
+export DOCKER_TAG                  := env_var_or_default("DOCKER_TAG", `(deno run --unstable --allow-all ../.cloudseed/deno/git/getGitSha.ts --short=8) || echo cache`)
+export DOCKER_BUILDKIT             := "1"
+export COMPOSE_DOCKER_CLI_BUILD    := "1"
+export DENO_SOURCE                 := ROOT + "/.cloudseed/deno"
+bold                               := '\033[1m'
+normal                             := '\033[0m'
+green                              := "\\e[32m"
+yellow                             := "\\e[33m"
+magenta_light                      := "\\e[92m"
+
+
+# If not in docker, get inside
+_help:
+    #!/usr/bin/env bash
+    # exit when any command fails
+    set -euo pipefail
+    if [ -f /.dockerenv ]; then
+        echo ""
+        echo "🌱 Cloudseed 🌱 gitops powered application deployment.  Deploy, inspect, update, and destroy your app in cloud infrastructure (AWS, GCE, Azure)"
+        echo ""
+        just --list --unsorted
+        echo ""
+        echo -e "🚀 Deployments:"
+        for deployment in $(just deployments | jq -r '.[]'); do
+            echo "    just ${deployment}/"
+        done
+        echo -e
+    else
+        just _docker $(basename $PWD);
+    fi
+
+# TODO: check existence of KMS keys first!
+# Create a new cloud deployment. env(environment)=id or domain or some unique identifier
+@create +args="":
+    deno run --unstable --allow-all {{DENO_SOURCE}}/cloudseed/create.ts {{args}}
+
+@deployments:
+    deno run --unstable --allow-all {{DENO_SOURCE}}/cloudseed/list_deployments.ts
+
+# Cloud provider (gcp|aws) initialization, status, outputs
+provider provider="none" +args="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ "{{provider}}" = "none" ]; then
+        echo -e "🚪 🔥 requires provider as first argument: {{bold}}gcp | aws{{normal}} 🚪"
+        exit 0
+    fi
+    just {{ROOT}}/.cloudseed/cloud/lib/provider/{{provider}}/{{args}}
+
+# git repository root, mounting this project in docker requries absolute paths
+
+# -e DENO_DIR=$WORKSPACE/.cloudseed/.deno_dir \
+# Do ./cloud operations in docker with all required tools installed, including local bash history
+# Build and run the cloud image, used deployments
+@_docker dir +args="bash": _build
+    echo -e "🚪🚪 Entering docker context: {{bold}}{{DOCKER_IMAGE_PREFIX}}cloud:{{DOCKER_TAG}} from <cloud/>Dockerfile 🚪🚪{{normal}}"
+    mkdir -p {{ROOT}}/.tmp
+    touch {{ROOT}}/.tmp/.bash_history
+    export WORKSPACE=$(just ../ci/workspace) && \
+        docker run \
+            --rm \
+            -ti \
+            -e DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX} \
+            -e PS1="< \w/> " \
+            -e PROMPT="<%/% > " \
+            -e DOCKER_IMAGE_PREFIX={{DOCKER_IMAGE_PREFIX}} \
+            -e HISTFILE=$WORKSPACE/.tmp/.bash_history \
+            -e WORKSPACE=$WORKSPACE \
+            -v {{ROOT}}:$WORKSPACE \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -w $WORKSPACE/{{dir}} \
+            {{DOCKER_IMAGE_PREFIX}}cloud:{{DOCKER_TAG}} {{args}} || true
+
+# If the ./app docker image in not build, then build it
+@_build:
+    if [[ "$(docker images -q {{DOCKER_IMAGE_PREFIX}}cloud:{{DOCKER_TAG}} 2> /dev/null)" == "" ]]; then \
+        echo -e "🚪🚪  ➡ {{bold}}Building ./cloud docker image ...{{normal}} 🚪🚪 "; \
+        echo -e "🚪 <cloud/> {{bold}}docker build -f cloud/Dockerfile -t {{DOCKER_IMAGE_PREFIX}}cloud:{{DOCKER_TAG}} . {{normal}}🚪 "; \
+        cd .. && docker build -f {{ROOT}}/.cloudseed/cloud/Dockerfile -t {{DOCKER_IMAGE_PREFIX}}cloud:{{DOCKER_TAG}} . ; \
+    fi
+
+_ensure_inside_docker:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f /.dockerenv ]; then
+        echo -e "🌵🔥🌵🔥🌵🔥🌵 Not inside a docker container. Assuming this is a user computer (not a CI worker). First run the command: 'just' 🌵🔥🌵🔥🌵🔥🌵"
+        exit 1
+    fi

@@ -1,0 +1,37 @@
+# Defines queries/mutations
+# https://graphql-code-generator.com/docs/plugins/typescript-graphql-request
+# 1. <app/> just graphql console
+# 2. Create a query
+# 3. Copy the query to this file
+# 4. <app/> just api-private/generate
+# 5. Now you have a typed sdk!
+
+query GetUserById($id: uuid!) {
+  users(where: { id: { _eq: $id } }) {
+    id
+    email
+    username
+  }
+}
+
+query GetUserByUsername($username: String!) {
+  users(where: { username: { _eq: $username } }) {
+    id
+    email
+    username
+  }
+}
+
+mutation SetUsername($user: uuid!, $username: String!) {
+  update_users(where: {id: {_eq: $user}}, _set: {username: $username}) {
+    returning {
+      username
+    }
+  }
+}
+
+query GetUserFromToken($token: String!, $now: timestamptz!) {
+  tokens(where: {token: {_eq: $token}, _and: {_or: [{expires_at: {_gt: $now}}, {expires_at: {_is_null: true}}]}}, limit: 1) {
+    user
+  }
+}

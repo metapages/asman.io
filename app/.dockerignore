@@ -1,0 +1,12 @@
+# The docker build context 'app/' is used for some services (rather than 'app/<service>')
+# and .dockerfiles are not checked recursively
+/api-private/dist
+/api-private/node_modules
+/api-public/node_modules
+/api-public/dist
+/browser/.cache
+/browser/dist
+/browser/node_modules
+/deno
+/graphql
+/ingress

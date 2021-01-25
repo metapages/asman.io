@@ -1,0 +1,35 @@
+set shell := ["bash", "-c"]
+
+export APP_PORT := env_var_or_default("APP_PORT", "443")
+export APP_FQDN     := env_var_or_default("APP_FQDN", "app1.dev")
+
+bold     := '\033[1m'
+normal   := '\033[0m'
+
+@_help:
+    just --list
+    echo ""
+
+init: generate
+
+@clean:
+    @echo -e "🚪 <app/vouch/> {{bold}}rm -rf vouch/config/config.yaml{{normal}} 🚪"
+    rm -rf config/*
+
+generate:
+    #!/usr/bin/env bash
+    mkdir -p config
+    if [ ! -f "oauth/${APP_FQDN}:${APP_PORT}.yaml" ]; then
+        echo -e "";
+        echo -e "💥 {{bold}}./app/vouch/oauth/${APP_FQDN}:${APP_PORT}.yaml{{normal}}💥 is missing, which needs to define the vouch-proxy OAuth configuration for that endpoint";
+        echo -e "💥 {{bold}}   👀 ➡ Replicate the structure of the examples in app/vouch/oauth/";
+        echo -e "💥 {{bold}}   👀 ➡ See for examples of configuration: https://github.com/vouch/vouch-proxy#installation-and-configuration";
+        echo -e "";
+        exit 1;
+    fi
+    echo -e "🚪 <app/vouch/> {{bold}}cp oauth/${APP_FQDN}:${APP_PORT}.yaml config/config.yaml{{normal}} 🚪"
+    cp oauth/${APP_FQDN}:${APP_PORT}.yaml config/config.yaml
+
+# restart the docker service on any code changes
+@dev:
+    watchexec --watch config/config.yaml -- 'just generate && docker-compose restart vouch'

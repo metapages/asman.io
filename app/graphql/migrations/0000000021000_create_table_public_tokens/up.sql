@@ -1,0 +1,2 @@
+
+CREATE TABLE "public"."tokens"("token" text NOT NULL DEFAULT concat(md5(random()::text), md5(random()::text)), "user" uuid NOT NULL, "created_at" timestamptz NOT NULL DEFAULT now(), "accessed_at" timestamptz NOT NULL DEFAULT now(), PRIMARY KEY ("token") , FOREIGN KEY ("user") REFERENCES "public"."users"("id") ON UPDATE restrict ON DELETE restrict, UNIQUE ("token"));

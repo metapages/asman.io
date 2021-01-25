@@ -1,0 +1,30 @@
+#######################################################
+# just docs: https://github.com/casey/just
+#######################################################
+# graphql commands
+#######################################################
+
+set shell := ["bash", "-c"]
+
+export GRAPHQL_CONSOLE_PORT        := env_var_or_default("GRAPHQL_CONSOLE_PORT", "9695")
+export PORT_GRAPHQL                := env_var_or_default("PORT_GRAPHQL", "8080")
+export HASURA_GRAPHQL_ADMIN_SECRET := env_var_or_default("HASURA_GRAPHQL_ADMIN_SECRET", "notactuallysecret")
+
+
+# universal way to open stuff
+OPEN := `if [ $(command -v xdg-open) ]; then echo "xdg-open"; else echo "open"; fi`
+
+@_help:
+    just --list
+
+# Open the hasura graphql database console. Host only (cannot be run in the docker environment)
+console: _check_for_hasura
+    {{OPEN}} http://localhost:{{GRAPHQL_CONSOLE_PORT}}
+    hasura --skip-update-check console --console-port {{GRAPHQL_CONSOLE_PORT}} --no-browser --address 0.0.0.0 --endpoint http://localhost:{{PORT_GRAPHQL}} --admin-secret {{HASURA_GRAPHQL_ADMIN_SECRET}}
+
+# squash migrations from from the provided version
+squash_from version: _check_for_hasura
+    hasura --skip-update-check migrate squash --endpoint http://localhost:{{PORT_GRAPHQL}} --admin-secret {{HASURA_GRAPHQL_ADMIN_SECRET}} --from {{version}}
+
+@_check_for_hasura:
+    command -v hasura >/dev/null 2>&1 || { printf >&2 "Hasura CLI required but it's not installed.  Aborting.\n\n https://docs.hasura.io/1.0/graphql/manual/hasura-cli/install-hasura-cli.html\n\n"; exit 1; }

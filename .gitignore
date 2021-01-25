@@ -1,0 +1,42 @@
+#Local terragrunt directories
+**/.terragrunt-cache*
+
+#  Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+**/.tfstate
+**/*.tfstate.*
+
+# .tfvars files
+**/.tfvars
+
+# .tfplan files
+**/.tfplan
+
+# Only ignore the root .env file, child .env files are symlinked to this one
+# so there is a SINGLE global .env context for a given operation
+/.env
+
+# Never commit cached deno code
+**/.deno_dir
+
+
+
+
+###########################################################################################
+# cloud/
+###########################################################################################
+# The .env file in this directory is ignored, but child folder .env files are committed
+/cloud/.env
+# cached deno source
+**/.deno_dir
+
+# Don't commit this, keys to the gcp castle
+/cloud/**/terraform-admin.json
+
+# terraform/terragrunt
+/cloud/**/.terragrunt-cache
+
+# Local caches and state
+**/.tmp

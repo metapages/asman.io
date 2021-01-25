@@ -1,0 +1,36 @@
+query GetUser {
+  users {
+    email
+    picture
+    username
+  }
+}
+
+mutation SetUsername($username :String!) {
+  setUsername(username: $username) {
+    error
+    username
+  }
+}
+
+query IsUsername($username: String!) {
+  isUsername(username: $username) {
+    exists
+  }
+}
+
+query GetUserPreferences {
+  users_preferences {
+    key
+    value
+  }
+}
+
+mutation UpdateUserPreference($key: String!, $value: jsonb) {
+  insert_users_preferences(
+    objects: { key: $key, value: $value }
+    on_conflict: { constraint: users_preferences_pkey, update_columns: [value] }
+  ) {
+    affected_rows
+  }
+}

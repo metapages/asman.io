@@ -1,0 +1,9 @@
+# These ignores are for .cloudseed/cloud/Dockerfile
+
+/app
+.git
+**/.deno_dir
+.cloudseed/deno/.git
+
+# Local caches and state
+**/.tmp

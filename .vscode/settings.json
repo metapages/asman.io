@@ -1,0 +1,42 @@
+{
+  "files.exclude": {
+    "**/.cache": true,
+    "**/.deno_dir": true,
+    "**/.root": true,
+    "**/.terragrunt-cache": true,
+    "**/dist": true,
+    "**/node_modules": true,
+    "**/package-lock.json": true
+  },
+  "files.watcherExclude": {
+    "**/.cache/**": true,
+    "**/.deno_dir/**": true,
+    "**/.terragrunt-cache/**": true,
+    "**/dist/**": true
+  },
+  "search.exclude": {
+    "**/.cache": true,
+    "**/.deno_dir": true,
+    "**/.terragrunt-cache": true,
+    "**/dist": true,
+    "**/package-lock.json": true
+  },
+  "files.associations": {
+    "**/browser/**/*.ts": "typescript",
+    "**/*.hcl": "terraform",
+    "**/deno/**/*.ts": "typescript",
+    "**/*.conf": "nginx"
+  },
+  "deno.unstable": true,
+  "json.maxItemsComputed": 500000,
+  "editor.trimAutoWhitespace": false,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "deno.enable": true,
+  "deno.lint": true,
+  "json.schemas": [
+    {
+      "fileMatch": ["**/.github/workflows/*"],
+      "url": "https://raw.githubusercontent.com/softprops/github-actions-schemas/master/workflow.json"
+    }
+  ]
+}

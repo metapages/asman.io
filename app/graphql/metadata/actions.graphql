@@ -1,0 +1,25 @@
+type Query {
+  isUsername (
+    username: String!
+  ): IsUsernameOutput
+}
+
+
+type Mutation {
+  setUsername (
+    username: String!
+  ): SetUsernameOutput
+}
+
+
+
+
+type SetUsernameOutput {
+  username : String
+  error : String
+}
+
+type IsUsernameOutput {
+  exists : Boolean!
+}
+
